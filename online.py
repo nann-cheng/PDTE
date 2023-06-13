@@ -123,8 +123,8 @@ async def async_main(_id):
             print(0)
 
 
-        
-    lastRecv = pool.getRecvBytes()
+    if BENCHMARK_MEASURE_ONLINE_COMMU:
+        lastRecv = pool.getRecvBytes()
 
     ### <<<<< 1. Feature selection ### (1). Does feature selection on every non-leaf node value
     player.featureSelect0()# Collect First round message
@@ -145,10 +145,11 @@ async def async_main(_id):
     print("1st Round-feature selection completed")
     ### 1. Feature selection >>>>> ###
 
-    nowRecv = pool.getRecvBytes()
-    # print("Player ",_id, " feature selection received: ",nowRecv-lastRecv)
-    print(nowRecv-lastRecv)
-    lastRecv = nowRecv
+    if BENCHMARK_MEASURE_ONLINE_COMMU:
+        nowRecv = pool.getRecvBytes()
+        # print("Player ",_id, " feature selection received: ",nowRecv-lastRecv)
+        print(nowRecv-lastRecv)
+        lastRecv = nowRecv
 
     ### <<<<< 2. Comparison phase <Costs 2 rounds> ###
     player.compare0()
@@ -165,9 +166,10 @@ async def async_main(_id):
     await player.distributeNetworkPool()
     print("3rd Round-comparison: complete SC-AND .")
 
-    nowRecv = pool.getRecvBytes()
-    print(nowRecv-lastRecv)
-    lastRecv = nowRecv
+    if BENCHMARK_MEASURE_ONLINE_COMMU:
+        nowRecv = pool.getRecvBytes()
+        print(nowRecv-lastRecv)
+        lastRecv = nowRecv
 
     if _id == 0:
         messages = await pool.recv("server1" )
@@ -240,10 +242,12 @@ async def async_main(_id):
         player.pathEval2(revealVec,otherShuffleShare)
     ### 3. Path evaluation phase >>>>> ###
 
+
     print("5th Round-Evaluation: completed")
-    nowRecv = pool.getRecvBytes()
-    print(nowRecv-lastRecv)
-    lastRecv = nowRecv
+    if BENCHMARK_MEASURE_ONLINE_COMMU:
+        nowRecv = pool.getRecvBytes()
+        print(nowRecv-lastRecv)
+        lastRecv = nowRecv
 
     ### Needs to say, by this point the protocol is completed.
     ### But to reconstruct the final value we ask p1 send his v1 to p0 for a construction of final classification result.

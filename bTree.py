@@ -1,7 +1,7 @@
 import pickle
 import random
 # from common.helper import *
-
+from benchmarkOption import *
 # For dummy feature 
 FEATURE_USED ={
     "linnerud": [0, 1, 2],
@@ -49,7 +49,8 @@ class BinaryTree:
         clf=None
         self.modelName = name
         # with open("data/train/"+name+".model", 'rb') as fid:
-        with open("/home/crypto/Desktop/pdte/impl/data/train/"+name+".model", 'rb') as fid:
+        filePath = "/root/PDTE/" if BENCHMARK_OVER_CLOUD else "/home/crypto/Desktop/pdte/impl/"
+        with open(filePath+"data/train/"+name+".model", 'rb') as fid:
             clf=  pickle.load(fid)
 
         self.thresholds = clf.tree_.threshold
