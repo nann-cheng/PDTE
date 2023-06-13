@@ -162,7 +162,9 @@ async def async_main(_id):
 
     if BENCHMARK_MEASURE_ONLINE_COMPUTATION:
         end_time = time.time()
+        print("\n")
         print("Feature selection costs: ",end_time-start_time)
+        print("\n")
         start_time = end_time
 
     ### <<<<< 2. Comparison phase <Costs 2 rounds> ###
@@ -209,7 +211,9 @@ async def async_main(_id):
 
     if BENCHMARK_MEASURE_ONLINE_COMPUTATION:
         end_time = time.time()
+        print("\n")
         print("Comparison costs: ",end_time-start_time)
+        print("\n")
         start_time = end_time
 
     ### <<<<< 3. Path evaluation phase ###
@@ -272,7 +276,9 @@ async def async_main(_id):
 
     if BENCHMARK_MEASURE_ONLINE_COMPUTATION:
         end_time = time.time()
+        print("\n")
         print("Evaluation costs: ",end_time-start_time)
+        print("\n")
         start_time = end_time
 
     ### Needs to say, by this point the protocol is completed.
