@@ -1,0 +1,11 @@
+diabets-20  is with  2096412  dummy nodes.
+diabets-20  is with  20  depth.
+There are in total # 442  piece of tVecData
+tVec is:  [19, -43, 61, -44, -17, 21, 38, -34, 50, -2]
+The test vector has  10 attributes
+Offline Rouletteprep costs:
+0
+Offline PathEvalPrep costs:
+0
+Offline Compare costs:
+0
