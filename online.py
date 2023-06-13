@@ -132,6 +132,9 @@ async def async_main(_id):
     if BENCHMARK_MEASURE_ONLINE_COMMU:
         lastRecv = pool.getRecvBytes()
 
+    if BENCHMARK_MEASURE_ONLINE_COMPUTATION:
+        start_time = time.time()
+
     ### <<<<< 1. Feature selection ### (1). Does feature selection on every non-leaf node value
     player.featureSelect0()# Collect First round message
     await player.distributeNetworkPool()
@@ -157,6 +160,11 @@ async def async_main(_id):
         print(nowRecv-lastRecv)
         lastRecv = nowRecv
 
+    if BENCHMARK_MEASURE_ONLINE_COMPUTATION:
+        end_time = time.time()
+        print("Feature selection costs: ",end_time-start_time)
+        start_time = end_time
+
     ### <<<<< 2. Comparison phase <Costs 2 rounds> ###
     player.compare0()
     await player.distributeNetworkPool()
@@ -172,10 +180,7 @@ async def async_main(_id):
     await player.distributeNetworkPool()
     print("3rd Round-comparison: complete SC-AND .")
 
-    if BENCHMARK_MEASURE_ONLINE_COMMU:
-        nowRecv = pool.getRecvBytes()
-        print(nowRecv-lastRecv)
-        lastRecv = nowRecv
+    
 
     if _id == 0:
         messages = await pool.recv("server1" )
@@ -196,6 +201,16 @@ async def async_main(_id):
         otherBShareList = messages0["invConv"]
         player.compare2(pq_vals0,pq_vals1,otherBShareList)
     ### 2. Comparison phase >>>>> ###
+
+    if BENCHMARK_MEASURE_ONLINE_COMMU:
+        nowRecv = pool.getRecvBytes()
+        print(nowRecv-lastRecv)
+        lastRecv = nowRecv
+
+    if BENCHMARK_MEASURE_ONLINE_COMPUTATION:
+        end_time = time.time()
+        print("Comparison costs: ",end_time-start_time)
+        start_time = end_time
 
     ### <<<<< 3. Path evaluation phase ###
     player.resetMsgPoolWithKeys("shuffleReveal","optShuffle")#Reset message pool
@@ -254,6 +269,11 @@ async def async_main(_id):
         nowRecv = pool.getRecvBytes()
         print(nowRecv-lastRecv)
         lastRecv = nowRecv
+
+    if BENCHMARK_MEASURE_ONLINE_COMPUTATION:
+        end_time = time.time()
+        print("Evaluation costs: ",end_time-start_time)
+        start_time = end_time
 
     ### Needs to say, by this point the protocol is completed.
     ### But to reconstruct the final value we ask p1 send his v1 to p0 for a construction of final classification result.
