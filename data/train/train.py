@@ -60,7 +60,9 @@ for i,d in enumerate(dataset):
         # tVec = random.choice(X)
         tVec = X[0]
         # ret = clf.apply([tVec])
+        start = time.time()
         ret = clf.predict([tVec])
+        print("required time is: ",time.time() - start )
         print("Final evaluation results is: ", ret)
     end_T = time.time()
     print("total time used is: ",(end_T-start_T),"\n\n")

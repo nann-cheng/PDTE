@@ -32,8 +32,6 @@ async def async_main(_id):
     # sharesVec: the sample vector to test
     aux = dealer.Rouletteprep(_id)
 
-    
-    
     dim = len(treeShares[0])
     piShares, bShares = dealer.PathEvalPrep(dim,_id)
     # print("The amount of nonLeaf nodes are: ", len(bShares))

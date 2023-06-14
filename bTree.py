@@ -49,7 +49,7 @@ class BinaryTree:
         clf=None
         self.modelName = name
         # with open("data/train/"+name+".model", 'rb') as fid:
-        filePath = "/root/PDTE/" if BENCHMARK_OVER_CLOUD else "/home/crypto/Desktop/pdte/impl/"
+        filePath = "/root/PDTE/" if BENCHMARK_OVER_CLOUD else "/home/crypto/Desktop/PDTE/"
         with open(filePath+"data/train/"+name+".model", 'rb') as fid:
             clf=  pickle.load(fid)
 
@@ -58,9 +58,9 @@ class BinaryTree:
         self.features = clf.tree_.feature
         self.dummyLeafCnt = 0
         
-        # print("binary tree features are: ", self.features)
+        print("binary tree features are: ", self.features)
         # self.featureUsed = clf.n_features_in_int
-        # print(self.thresholds)
+        print("nodes num is: ",len(self.thresholds))
         # print(self.values)
         
         # count used feature number here
