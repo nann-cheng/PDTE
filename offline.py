@@ -282,7 +282,21 @@ async def async_main(_id):
         await pool.send("server0","Hello!")
 
 
-    nowRecv = pool.getRecvBytes()
+    # total_bytes_sent = 0
+    # msg_send_counter = 0
+    #  total_bytes_recv = 0
+    #   msg_recv_counter = 0
+    # if pool.http_server is not None:
+    #     msg_recv_counter = server.msg_recv_counter
+    #     total_bytes_recv = pool.http_server.total_bytes_recv
+    #     for handler in self.pool_handlers.values():
+    #         await handler.shutdown()
+    #         total_bytes_sent += handler.total_bytes_sent
+
+            
+
+    # nowRecv = pool.getRecvBytes()
+    nowRecv = pool.http_server.total_bytes_recv
     lastRecv = nowRecv
 
     ## Test offline cost (commu. & computation)
@@ -331,10 +345,8 @@ async def async_main(_id):
 
 
     
-
-
-
-    nowRecv = pool.getRecvBytes()
+    # nowRecv = pool.getRecvBytes()
+    nowRecv = pool.http_server.total_bytes_recv
     print(nowRecv-lastRecv)
     lastRecv = nowRecv
     await pool.shutdown()
