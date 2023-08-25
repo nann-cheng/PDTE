@@ -135,7 +135,7 @@ async def async_main(_id):
 
     ### <<<<< 1. Feature selection ### (1). Does feature selection on every non-leaf node value
     player.featureSelect0()# Collect First round message
-    player.distributeScatteredNetworkPool()
+    sendCoroutine = player.distributeScatteredNetworkPool()
 
     compute_corotines=[]
     chunks_size = len(player.idxSS)/PERFORMANCE_BATCH_SIZE
@@ -200,6 +200,8 @@ async def async_main(_id):
             else:
                 server1_buffer[index] = array
 
+    # Closure of all the coroutines within network send
+    await sendCoroutine
     for corotine in compute_corotines:
         await corotine
     player.resetMsgPoolAsList()#Clear message pool
