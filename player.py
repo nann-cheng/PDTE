@@ -5,6 +5,7 @@ from parties.partyEval import EvalParty
 from fss import ICNew
 import sycret
 import numpy as np
+from benchmarkOption import *
 
 #TODO: 
 # 1. generate multiple instances of aux values
@@ -64,7 +65,65 @@ class Player:
                 if len(val)>0:
                     willSend=True
             if willSend:
-                await self.network.send("server"+key,val)
+                await self.network.send("server"+key,val)\
+                
+    
+    async def distributeScatteredNetworkPool(self):
+        ''' 
+        Underlying procedure:
+         0. send samll chunks instead of sending a long message at once
+         1. use corontines when distributing messages to different servers
+        '''
+        chunks_size = 0
+        willSendKeys = []
+        # Prepare the message 
+        for key, val in self.msgPool.items():
+            _type = type(val).__name__
+            if _type == "dict":
+                for _, inVal in val.items():
+                    total_size = len(inVal)
+                    chunks_size = total_size/PERFORMANCE_BATCH_SIZE
+                    if total_size%PERFORMANCE_BATCH_SIZE >0:
+                        chunks_size += 1
+                    if total_size > 0:
+                        willSendKeys.append(key)
+                        break
+                    
+            elif _type == "list":
+                total_size = len(val)
+                if total_size > 0:
+                    willSendKeys.append(key)
+                chunks_size = total_size/PERFORMANCE_BATCH_SIZE
+                if total_size % PERFORMANCE_BATCH_SIZE > 0:
+                    chunks_size += 1
+                
+        
+        #However, we need to sync each small chunk
+        # last_corontines = []
+        for i in range(chunks_size):
+            # for corontine in last_corontines:
+            #     await corontine
+
+            # last_corontines=[]
+            for key in willSendKeys:
+                cur_data = self.msgPool.get(key)
+                _type = type(cur_data).__name__
+                if _type == "dict":
+                    new_map = {}
+                    for mapKey, value in cur_data.items():
+                        if i < chunks_size-1:
+                            new_map[mapKey] = value[i *PERFORMANCE_BATCH_SIZE:(i+1)*PERFORMANCE_BATCH_SIZE]
+                        else:
+                            new_map[mapKey] = value[i*PERFORMANCE_BATCH_SIZE:]
+                    self.network.asend("server"+key, [i, new_map])
+                    # last_corontines.append( self.network.send("server"+key, new_map) )
+                elif _type == "list":
+                    if i < chunks_size-1:
+                        self.network.asend(
+                            "server"+key, [i, cur_data[i * PERFORMANCE_BATCH_SIZE:(i+1)*PERFORMANCE_BATCH_SIZE]])
+                    else:
+                        self.network.asend( "server"+key, [i, cur_data[i*PERFORMANCE_BATCH_SIZE:]])
+        
 
     def inputRSS(self,leafSS, vSS, treeSS, condShare):
         self.leafSS = leafSS
@@ -96,7 +155,7 @@ class Player:
         self.triples = triples
 
     def featureSelect0(self):
-        for i,idx in enumerate(self.idxSS):
+        for _,idx in enumerate(self.idxSS):
             nSS = self.aux[2]
             xorShare = RSS_local_add(idx,nSS,self.tVecDim)
             # if i==0:
@@ -119,6 +178,38 @@ class Player:
                     self.msgPool["0"].append( vVec )
             else:
                 self.msgPool["0"].append( idx_maskSS )
+            # This is to initialize the list
+            self.selectedShares.append(0)
+
+    async def featureSelect1(self,chunk_index, p0, p1):
+        nSS = self.aux[2]
+        alpha_share = self.aux[1]
+        piece_size = len(p0)
+        for i in range(piece_size):
+            whole_index = chunk_index*PERFORMANCE_BATCH_SIZE + i
+            idx = self.idxSS[whole_index]
+            m_mask_nSS = RSS_local_add(idx, nSS, self.tVecDim)
+            revealShift = m_mask_nSS[0] + m_mask_nSS[1]
+            if self.ID == 0:
+                # p0,p1: vArray,nSSArray
+                yShare = self.selectP.Roulete2([alpha_share, nSS, p0[i]])
+                revealShift = (revealShift + p1[i]) % self.tVecDim
+                self.selectedShares.insert(whole_index,
+                    [yShare[0][revealShift],  yShare[1][revealShift]])
+            elif self.ID == 1:
+                # p0: array:[vArray,nssArray]
+                yShare = self.selectP.Roulete2([alpha_share, nSS, p0[i][0]])
+                revealShift = (revealShift + p0[i][1]) % self.tVecDim
+                self.selectedShares.insert(whole_index,
+                    [yShare[0][revealShift],  yShare[1][revealShift]])
+            else:
+                # p0,p1: vArray,array
+                yShare = self.selectP.Roulete2(
+                    [alpha_share, nSS, p0[i], p1[i][0]])
+                revealShift = (revealShift + p1[i][1]) % self.tVecDim
+                self.selectedShares.insert(whole_index,
+                    [yShare[0][revealShift],  yShare[1][revealShift]])
+                
 
     #Process feature selection after network interaction
     def featureSelect1(self,p0,p1):
@@ -178,7 +269,6 @@ class Player:
                 r_eq = r_eq[0].item()#Convert numpy array to a normal int value
 
                 reveal =  inRing(self.vals4Less[i]+otherShares[1][i], INT_32_MAX)
-
                 r_le = self.IntCmp.eval(self.ID, np.array( [np.int64(reveal)] ), self.fssKeys[i][2])
                 xor = inRing( r_eq + r_le, BOOLEAN_BOUND)
 

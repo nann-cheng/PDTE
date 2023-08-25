@@ -135,19 +135,73 @@ async def async_main(_id):
 
     ### <<<<< 1. Feature selection ### (1). Does feature selection on every non-leaf node value
     player.featureSelect0()# Collect First round message
-    await player.distributeNetworkPool()
+    player.distributeScatteredNetworkPool()
 
+    compute_corotines=[]
+    chunks_size = len(player.idxSS)/PERFORMANCE_BATCH_SIZE
+    if len(player.idxSS) % PERFORMANCE_BATCH_SIZE > 0:
+        chunks_size += 1
+    success_time = 0
+    
     if _id == 0:
-        vArray = await pool.recv("server1" )
-        nSSArray =  await pool.recv("server2")
-        player.featureSelect1(vArray,nSSArray)
+        server1_buffer={}
+        server2_buffer={}
+        while success_time < chunks_size:
+            message = await pool.recv("server1")
+            index, vArray = message[0], message[1]
+            if index in server2_buffer:
+                nSSArray = server2_buffer.get(index)
+                del server2_buffer[index]
+                compute_corotines.append( player.featureSelect1(index, vArray, nSSArray))
+                success_time+=1
+                if success_time == chunks_size:
+                    break
+            else:
+                server1_buffer[index] = vArray
+
+            message = await pool.recv("server2")
+            index, nSSArray = message[0], message[1]
+            if index in server1_buffer:
+                vArray = server1_buffer.get(index)
+                del server1_buffer[index]
+                compute_corotines.append( player.featureSelect1(index, vArray, nSSArray))
+                success_time += 1
+            else:
+                server2_buffer[index] = nSSArray
     elif _id == 1:
-        array = await pool.recv("server0" )
-        player.featureSelect1(array,None)
-    else:
-        vArray = await pool.recv("server0" )
-        array = await pool.recv("server1" )
-        player.featureSelect1(vArray,array)
+        while success_time < chunks_size:
+            message = await pool.recv("server0" )
+            index, array = message[0], message[1]
+            compute_corotines.append( player.featureSelect1(index, array, None) )
+            success_time+=1
+    elif _id == 2:
+        server0_buffer = {}
+        server1_buffer = {}
+        while success_time < chunks_size:
+            message = await pool.recv("server0")
+            index, vArray = message[0], message[1]
+            if index in server1_buffer:
+                array = server1_buffer.get(index)
+                del server1_buffer[index]
+                compute_corotines.append( player.featureSelect1(index, vArray, array))
+                success_time += 1
+                if success_time == chunks_size:
+                    break
+            else:
+                server0_buffer[index] = vArray
+
+            message = await pool.recv("server1")
+            index, array = message[0], message[1]
+            if index in server0_buffer:
+                vArray = server0_buffer.get(index)
+                del server0_buffer[index]
+                compute_corotines.append( player.featureSelect1(index, vArray, array) )
+                success_time += 1
+            else:
+                server1_buffer[index] = array
+
+    for corotine in compute_corotines:
+        await corotine
     player.resetMsgPoolAsList()#Clear message pool
     print("1st Round-feature selection completed")
     ### 1. Feature selection >>>>> ###
@@ -181,7 +235,6 @@ async def async_main(_id):
     print("3rd Round-comparison: complete SC-AND .")
 
     
-
     if _id == 0:
         messages = await pool.recv("server1" )
         pq_vals = messages["sc-and"]
@@ -201,6 +254,10 @@ async def async_main(_id):
         otherBShareList = messages0["invConv"]
         player.compare2(pq_vals0,pq_vals1,otherBShareList)
     ### 2. Comparison phase >>>>> ###
+
+
+
+
 
     if BENCHMARK_MEASURE_ONLINE_COMMU:
         nowRecv = pool.getRecvBytes()

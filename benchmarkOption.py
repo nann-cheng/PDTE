@@ -12,3 +12,7 @@ BENCHMARK_MEASURE_ONLINE_COMPUTATION=True
 BENCHMARK_OVER_CLOUD=False
 
 # BENCHMARK_OVER_SIMULATED=True
+
+######Performance improvement options##########
+PERFORMANCE_BATCH_SIZE = 1000
+######Performance improvement options##########
