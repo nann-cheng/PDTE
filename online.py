@@ -135,19 +135,24 @@ async def async_main(_id):
 
     ### <<<<< 1. Feature selection ### (1). Does feature selection on every non-leaf node value
     player.featureSelect0()# Collect First round message
-    sendCoroutine = player.distributeScatteredNetworkPool()
-
+    await player.distributeScatteredNetworkPool()
     compute_corotines=[]
-    chunks_size = len(player.idxSS)/PERFORMANCE_BATCH_SIZE
+
+    print("len(player.idxSS) is: ",len(player.idxSS))
+    chunks_size = int( len(player.idxSS)/PERFORMANCE_BATCH_SIZE)
     if len(player.idxSS) % PERFORMANCE_BATCH_SIZE > 0:
         chunks_size += 1
     success_time = 0
+    print("Now running after player.featureSelect0 with chunk size: ",chunks_size)
     
     if _id == 0:
         server1_buffer={}
         server2_buffer={}
         while success_time < chunks_size:
+            print("I am trying to receive message from server1 ")
             message = await pool.recv("server1")
+            print("I received message from server1 ")
+
             index, vArray = message[0], message[1]
             if index in server2_buffer:
                 nSSArray = server2_buffer.get(index)
@@ -178,7 +183,11 @@ async def async_main(_id):
         server0_buffer = {}
         server1_buffer = {}
         while success_time < chunks_size:
+            print("I am trying to receive message from server0 ")
+
             message = await pool.recv("server0")
+            print("I received message from server0 ")
+
             index, vArray = message[0], message[1]
             if index in server1_buffer:
                 array = server1_buffer.get(index)
@@ -201,9 +210,12 @@ async def async_main(_id):
                 server1_buffer[index] = array
 
     # Closure of all the coroutines within network send
-    await sendCoroutine
+    # await sendCoroutine
     for corotine in compute_corotines:
         await corotine
+    if player.ID ==0:
+        print("what's wrong with ", player.selectedShares)
+
     player.resetMsgPoolAsList()#Clear message pool
     print("1st Round-feature selection completed")
     ### 1. Feature selection >>>>> ###

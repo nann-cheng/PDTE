@@ -82,10 +82,10 @@ class Player:
             if _type == "dict":
                 for _, inVal in val.items():
                     total_size = len(inVal)
-                    chunks_size = total_size/PERFORMANCE_BATCH_SIZE
-                    if total_size%PERFORMANCE_BATCH_SIZE >0:
-                        chunks_size += 1
-                    if total_size > 0:
+                    if total_size>0:
+                        chunks_size = int( total_size/PERFORMANCE_BATCH_SIZE)
+                        if total_size%PERFORMANCE_BATCH_SIZE >0:
+                            chunks_size += 1
                         willSendKeys.append(key)
                         break
                     
@@ -93,18 +93,13 @@ class Player:
                 total_size = len(val)
                 if total_size > 0:
                     willSendKeys.append(key)
-                chunks_size = total_size/PERFORMANCE_BATCH_SIZE
-                if total_size % PERFORMANCE_BATCH_SIZE > 0:
-                    chunks_size += 1
-                
+                    chunks_size = int(total_size/PERFORMANCE_BATCH_SIZE)
+                    if total_size % PERFORMANCE_BATCH_SIZE > 0:
+                        chunks_size += 1
         
         #However, we need to sync each small chunk
-        # last_corontines = []
+        print("chunk size is: ",chunks_size)
         for i in range(chunks_size):
-            # for corontine in last_corontines:
-            #     await corontine
-
-            # last_corontines=[]
             for key in willSendKeys:
                 cur_data = self.msgPool.get(key)
                 _type = type(cur_data).__name__
@@ -194,45 +189,45 @@ class Player:
                 # p0,p1: vArray,nSSArray
                 yShare = self.selectP.Roulete2([alpha_share, nSS, p0[i]])
                 revealShift = (revealShift + p1[i]) % self.tVecDim
-                self.selectedShares.insert(whole_index,
-                    [yShare[0][revealShift],  yShare[1][revealShift]])
+                self.selectedShares[whole_index] =  [yShare[0][revealShift],  yShare[1][revealShift]]
             elif self.ID == 1:
                 # p0: array:[vArray,nssArray]
                 yShare = self.selectP.Roulete2([alpha_share, nSS, p0[i][0]])
                 revealShift = (revealShift + p0[i][1]) % self.tVecDim
-                self.selectedShares.insert(whole_index,
-                    [yShare[0][revealShift],  yShare[1][revealShift]])
+                self.selectedShares[whole_index] = [yShare[0][revealShift],  yShare[1][revealShift]]
             else:
                 # p0,p1: vArray,array
                 yShare = self.selectP.Roulete2(
                     [alpha_share, nSS, p0[i], p1[i][0]])
                 revealShift = (revealShift + p1[i][1]) % self.tVecDim
-                self.selectedShares.insert(whole_index,
-                    [yShare[0][revealShift],  yShare[1][revealShift]])
+                self.selectedShares[whole_index] = [yShare[0][revealShift],  yShare[1][revealShift]]
+        print("finish featureSelect1 coroutine")
                 
 
     #Process feature selection after network interaction
-    def featureSelect1(self,p0,p1):
-        nSS = self.aux[2]
-        alpha_share = self.aux[1]
-        for i,idx in enumerate(self.idxSS):
-            m_mask_nSS = RSS_local_add(idx,nSS,self.tVecDim)
-            revealShift = m_mask_nSS[0] + m_mask_nSS[1]
-            if self.ID == 0:
-                # p0,p1: vArray,nSSArray
-                yShare = self.selectP.Roulete2([alpha_share, nSS, p0[i] ])
-                revealShift = ( revealShift+ p1[i])%self.tVecDim
-                self.selectedShares.append([ yShare[0][revealShift],  yShare[1][revealShift]])
-            elif self.ID == 1:
-                # p0: array:[vArray,nssArray]
-                yShare = self.selectP.Roulete2([alpha_share, nSS, p0[i][0] ])
-                revealShift = (revealShift + p0[i][1])%self.tVecDim
-                self.selectedShares.append([ yShare[0][revealShift],  yShare[1][revealShift]])
-            else:
-                # p0,p1: vArray,array
-                yShare = self.selectP.Roulete2([alpha_share, nSS, p0[i], p1[i][0] ])
-                revealShift = (revealShift + p1[i][1])%self.tVecDim
-                self.selectedShares.append([ yShare[0][revealShift],  yShare[1][revealShift]])
+    # def featureSelect1(self,p0,p1):
+    #     nSS = self.aux[2]
+    #     alpha_share = self.aux[1]
+    #     for i,idx in enumerate(self.idxSS):
+    #         m_mask_nSS = RSS_local_add(idx,nSS,self.tVecDim)
+    #         revealShift = m_mask_nSS[0] + m_mask_nSS[1]
+    #         if self.ID == 0:
+    #             # p0,p1: vArray,nSSArray
+    #             yShare = self.selectP.Roulete2([alpha_share, nSS, p0[i] ])
+    #             revealShift = ( revealShift+ p1[i])%self.tVecDim
+    #             self.selectedShares.append([ yShare[0][revealShift],  yShare[1][revealShift]])
+    #         elif self.ID == 1:
+    #             # p0: array:[vArray,nssArray]
+    #             yShare = self.selectP.Roulete2([alpha_share, nSS, p0[i][0] ])
+    #             revealShift = (revealShift + p0[i][1])%self.tVecDim
+    #             self.selectedShares.append([ yShare[0][revealShift],  yShare[1][revealShift]])
+    #         else:
+    #             # p0,p1: vArray,array
+    #             yShare = self.selectP.Roulete2([alpha_share, nSS, p0[i], p1[i][0] ])
+    #             revealShift = (revealShift + p1[i][1])%self.tVecDim
+    #             self.selectedShares.append([ yShare[0][revealShift],  yShare[1][revealShift]])
+
+
             # if i==0:
                 # print("revealShift is: ", revealShift)
         # print("The first selected feature is: ", self.selectedShares[0] )
