@@ -149,15 +149,12 @@ async def async_main(_id):
         server1_buffer={}
         server2_buffer={}
         while success_time < chunks_size:
-            print("I am trying to receive message from server1 ")
             message = await pool.recv("server1")
-            print("I received message from server1 ")
-
             index, vArray = message[0], message[1]
             if index in server2_buffer:
                 nSSArray = server2_buffer.get(index)
                 del server2_buffer[index]
-                compute_corotines.append( player.featureSelect1(index, vArray, nSSArray))
+                compute_corotines.append( asyncio.create_task(player.featureSelect1(index, vArray, nSSArray)))
                 success_time+=1
                 if success_time == chunks_size:
                     break
@@ -169,7 +166,7 @@ async def async_main(_id):
             if index in server1_buffer:
                 vArray = server1_buffer.get(index)
                 del server1_buffer[index]
-                compute_corotines.append( player.featureSelect1(index, vArray, nSSArray))
+                compute_corotines.append( asyncio.create_task(player.featureSelect1(index, vArray, nSSArray)))
                 success_time += 1
             else:
                 server2_buffer[index] = nSSArray
@@ -177,22 +174,18 @@ async def async_main(_id):
         while success_time < chunks_size:
             message = await pool.recv("server0" )
             index, array = message[0], message[1]
-            compute_corotines.append( player.featureSelect1(index, array, None) )
+            compute_corotines.append( asyncio.create_task(player.featureSelect1(index, array, None) ))
             success_time+=1
     elif _id == 2:
         server0_buffer = {}
         server1_buffer = {}
         while success_time < chunks_size:
-            print("I am trying to receive message from server0 ")
-
             message = await pool.recv("server0")
-            print("I received message from server0 ")
-
             index, vArray = message[0], message[1]
             if index in server1_buffer:
                 array = server1_buffer.get(index)
                 del server1_buffer[index]
-                compute_corotines.append( player.featureSelect1(index, vArray, array))
+                compute_corotines.append( asyncio.create_task(player.featureSelect1(index, vArray, array)))
                 success_time += 1
                 if success_time == chunks_size:
                     break
@@ -204,17 +197,12 @@ async def async_main(_id):
             if index in server0_buffer:
                 vArray = server0_buffer.get(index)
                 del server0_buffer[index]
-                compute_corotines.append( player.featureSelect1(index, vArray, array) )
+                compute_corotines.append( asyncio.create_task(player.featureSelect1(index, vArray, array)) )
                 success_time += 1
             else:
                 server1_buffer[index] = array
 
-    # Closure of all the coroutines within network send
-    # await sendCoroutine
-    for corotine in compute_corotines:
-        await corotine
-    if player.ID ==0:
-        print("what's wrong with ", player.selectedShares)
+    await asyncio.gather(*compute_corotines)
 
     player.resetMsgPoolAsList()#Clear message pool
     print("1st Round-feature selection completed")
@@ -234,20 +222,34 @@ async def async_main(_id):
         start_time = end_time
 
     ### <<<<< 2. Comparison phase <Costs 2 rounds> ###
+    # print("selectedShare len is: ",len(player.selectedShares))
+
     player.compare0()
-    await player.distributeNetworkPool()
+    # await player.distributeNetworkPool()
+    await player.distributeScatteredNetworkPool()
     print("2nd Round-comparison: complete eq/less .")
 
-    otherShares=None
+    player.resetMsgPoolWithCmpKeys("sc-and","invConv")
+    success_time = 0
+    compute_corotines=[]
     if _id == 0:
-        otherShares = await pool.recv("server1" )
+        while success_time < chunks_size:
+            index,otherShares = await pool.recv("server1" )
+            success_time+=1
+            compute_corotines.append( asyncio.create_task(player.compare1(index,otherShares)))
     elif _id == 1:
-        otherShares = await pool.recv("server0" )
-    player.resetMsgPoolWithKeys("sc-and","invConv")
-    player.compare1(otherShares)
+        while success_time < chunks_size:
+            index,otherShares = await pool.recv("server0" )
+            success_time+=1
+            compute_corotines.append( asyncio.create_task(player.compare1(index,otherShares)))
+    elif _id == 2:
+        compute_corotines.append( asyncio.create_task(player.compare1(None,None)))
+
+    await asyncio.gather(*compute_corotines)
+
+    #!!! Following procedure can be optimized in theory, but I stop it here for good !!!#
     await player.distributeNetworkPool()
     print("3rd Round-comparison: complete SC-AND .")
-
     
     if _id == 0:
         messages = await pool.recv("server1" )
@@ -285,6 +287,9 @@ async def async_main(_id):
         print("\n")
         start_time = end_time
 
+
+
+
     ### <<<<< 3. Path evaluation phase ###
     player.resetMsgPoolWithKeys("shuffleReveal","optShuffle")#Reset message pool
     player.pathEval0_shuffleReveal(bShares,piShares)
@@ -313,6 +318,8 @@ async def async_main(_id):
     await player.distributeNetworkPool()
     print("5th Round-Evaluation: bouncing back message")
 
+
+
     #ShuffleReveal: receive final reveal value 1->(0,2)
     #Optshuffle:    receive re-randomized RSS
     if _id == 0:
@@ -331,7 +338,9 @@ async def async_main(_id):
     elif _id == 2:
         other1Data = await pool.recv("server1" )
         revealVec =  other1Data["shuffleReveal"]
+
         other0Data = await pool.recv("server0" )
+
         otherShuffleShare = other0Data["optShuffle"]
         player.pathEval2(revealVec,otherShuffleShare)
     ### 3. Path evaluation phase >>>>> ###
@@ -356,7 +365,15 @@ async def async_main(_id):
         if _id==0:
             v11 = await pool.recv("server1")
             print("The final selected class is: ", inRing(v00+ v01+v11,VEC_VAL_MAX_BOUND) )
-    await pool.shutdown()
+    if _id==0:
+        await asyncio.sleep(2)
+        await pool.shutdown()
+    if _id==1:
+        await asyncio.sleep(1)
+        await pool.shutdown()
+    else:
+        await pool.shutdown()
+
 
 if __name__ == "__main__":
     _id = int(sys.argv[1])

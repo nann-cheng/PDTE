@@ -59,7 +59,7 @@ class BinaryTree:
         self.features = clf.tree_.feature
         self.dummyLeafCnt = 0
         
-        print("binary tree features are: ", self.features)
+        # print("binary tree features are: ", self.features)
         # self.featureUsed = clf.n_features_in_int
         print("nodes num is: ",len(self.thresholds))
         # print(self.values)

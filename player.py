@@ -53,6 +53,18 @@ class Player:
                 }
         }
 
+    def resetMsgPoolWithCmpKeys(self,key0,key1):
+        self.msgPool[str( (self.ID+1)%3 )] ={
+                    key0:[ i for i in range(self.nodesAmount) ],
+                    key1:[ i for i in range(self.nodesAmount) ]
+                }
+
+        self.msgPool[str( (self.ID+2)%3 )] ={
+                    key0:[ i for i in range(self.nodesAmount) ],
+                    key1:[ i for i in range(self.nodesAmount) ]
+                }
+            
+
     async def distributeNetworkPool(self):
         for key,val in self.msgPool.items():
             _type = type(val).__name__
@@ -65,7 +77,7 @@ class Player:
                 if len(val)>0:
                     willSend=True
             if willSend:
-                await self.network.send("server"+key,val)\
+                self.network.asend("server"+key,val)
                 
     
     async def distributeScatteredNetworkPool(self):
@@ -201,103 +213,87 @@ class Player:
                     [alpha_share, nSS, p0[i], p1[i][0]])
                 revealShift = (revealShift + p1[i][1]) % self.tVecDim
                 self.selectedShares[whole_index] = [yShare[0][revealShift],  yShare[1][revealShift]]
-        print("finish featureSelect1 coroutine")
                 
-
-    #Process feature selection after network interaction
-    # def featureSelect1(self,p0,p1):
-    #     nSS = self.aux[2]
-    #     alpha_share = self.aux[1]
-    #     for i,idx in enumerate(self.idxSS):
-    #         m_mask_nSS = RSS_local_add(idx,nSS,self.tVecDim)
-    #         revealShift = m_mask_nSS[0] + m_mask_nSS[1]
-    #         if self.ID == 0:
-    #             # p0,p1: vArray,nSSArray
-    #             yShare = self.selectP.Roulete2([alpha_share, nSS, p0[i] ])
-    #             revealShift = ( revealShift+ p1[i])%self.tVecDim
-    #             self.selectedShares.append([ yShare[0][revealShift],  yShare[1][revealShift]])
-    #         elif self.ID == 1:
-    #             # p0: array:[vArray,nssArray]
-    #             yShare = self.selectP.Roulete2([alpha_share, nSS, p0[i][0] ])
-    #             revealShift = (revealShift + p0[i][1])%self.tVecDim
-    #             self.selectedShares.append([ yShare[0][revealShift],  yShare[1][revealShift]])
-    #         else:
-    #             # p0,p1: vArray,array
-    #             yShare = self.selectP.Roulete2([alpha_share, nSS, p0[i], p1[i][0] ])
-    #             revealShift = (revealShift + p1[i][1])%self.tVecDim
-    #             self.selectedShares.append([ yShare[0][revealShift],  yShare[1][revealShift]])
-
-
-            # if i==0:
-                # print("revealShift is: ", revealShift)
-        # print("The first selected feature is: ", self.selectedShares[0] )
-
     # Collect messages to be sent for FSS evaluation
     def compare0(self):
+        # Initialize some comparison related lists
+        self.valsPQ_shares=[i for i in range(self.nodesAmount)]
+        self.cmpResultShares=[i for i in range(self.nodesAmount)]
+
         if self.ID == 0:
             for i,select in enumerate(self.selectedShares):
                 # local convert (2,3)-RSS to (2,2)-SS
                 newSelectShare =  inRing(select[0]+select[1], INT_32_MAX)
                 newThresholdShare = inRing( self.thresholdSS[i][0] + self.thresholdSS[i][1], INT_32_MAX)
                 subShare = inRing( newSelectShare - newThresholdShare, INT_32_MAX)
-                self.vals4Equal.append( inRing( subShare + self.fssKeys[i][1], INT_32_MAX) )
-                self.vals4Less.append( inRing(  subShare + self.fssKeys[i][3], INT_32_MAX) )
-            self.msgPool["1"].append( self.vals4Equal)
-            self.msgPool["1"].append( self.vals4Less)
+                eqalRnd = inRing( subShare + self.fssKeys[i][1], INT_32_MAX)
+                lessRnd = inRing(  subShare + self.fssKeys[i][3], INT_32_MAX)
+                self.vals4Equal.append( eqalRnd )
+                self.vals4Less.append( lessRnd )
+                self.msgPool["1"].append( [eqalRnd,lessRnd] )
+            # self.msgPool["1"].append( self.vals4Equal)
+            # self.msgPool["1"].append( self.vals4Less)
+            
         elif self.ID == 1:
             for i,select in enumerate(self.selectedShares):
                 # local convert (2,3)-RSS to (2,2)-SS
                 newSelectShare = select[1]
                 newThresholdShare = self.thresholdSS[i][1]
                 subShare = inRing( newSelectShare - newThresholdShare, INT_32_MAX)
-                self.vals4Equal.append( inRing( subShare + self.fssKeys[i][1], INT_32_MAX) )
-                self.vals4Less.append( inRing(  subShare + self.fssKeys[i][3], INT_32_MAX) )
-            self.msgPool["0"].append( self.vals4Equal)
-            self.msgPool["0"].append( self.vals4Less)
+
+                eqalRnd = inRing( subShare + self.fssKeys[i][1], INT_32_MAX)
+                lessRnd = inRing(  subShare + self.fssKeys[i][3], INT_32_MAX)
+                self.vals4Equal.append( eqalRnd )
+                self.vals4Less.append( lessRnd )
+                self.msgPool["0"].append( [eqalRnd,lessRnd] )
+            # self.msgPool["0"].append( self.vals4Equal)
+            # self.msgPool["0"].append( self.vals4Less)
         
     # Collect messages to be sent to fulfill SC-AND computation
-    def compare1(self,otherShares):
+    async def compare1(self,chunk_index,otherShares):
         if self.ID <= 1:
-            for i in range(self.nodesAmount):
-                reveal =  inRing(self.vals4Equal[i] + otherShares[0][i], INT_32_MAX)
-                r_eq = self.eqFSS.eval(self.ID, np.array( [np.int64(reveal)] ), self.fssKeys[i][0])
+            piece_size = len(otherShares)
+            for i in range(piece_size):
+                whole_index = chunk_index*PERFORMANCE_BATCH_SIZE + i
+                reveal =  inRing(self.vals4Equal[whole_index] + otherShares[i][0], INT_32_MAX)
+                r_eq = self.eqFSS.eval(self.ID, np.array( [np.int64(reveal)] ), self.fssKeys[whole_index][0])
                 r_eq = r_eq[0].item()#Convert numpy array to a normal int value
 
-                reveal =  inRing(self.vals4Less[i]+otherShares[1][i], INT_32_MAX)
-                r_le = self.IntCmp.eval(self.ID, np.array( [np.int64(reveal)] ), self.fssKeys[i][2])
+                reveal =  inRing(self.vals4Less[whole_index]+otherShares[i][1], INT_32_MAX)
+                r_le = self.IntCmp.eval(self.ID, np.array( [np.int64(reveal)] ), self.fssKeys[whole_index][2])
                 xor = inRing( r_eq + r_le, BOOLEAN_BOUND)
 
                 cmpShare = [inRing( r_eq + self.getZeroShares("bRand",BOOLEAN_BOUND), BOOLEAN_BOUND),0]
                 
                 if self.ID == 0:
-                    condShare = inRing( self.condShares[i][0]+self.condShares[i][1], BOOLEAN_BOUND)
-                    alpha = inRing( self.triples[i][0][0]+self.triples[i][0][1], BOOLEAN_BOUND)
-                    beta = inRing( self.triples[i][1][0]+self.triples[i][1][1], BOOLEAN_BOUND)
+                    condShare = inRing( self.condShares[whole_index][0]+self.condShares[whole_index][1], BOOLEAN_BOUND)
+                    alpha = inRing( self.triples[whole_index][0][0]+self.triples[whole_index][0][1], BOOLEAN_BOUND)
+                    beta = inRing( self.triples[whole_index][1][0]+self.triples[whole_index][1][1], BOOLEAN_BOUND)
                     m_pVal = inRing( condShare + alpha, BOOLEAN_BOUND)
                     m_qVal = inRing( xor + beta, BOOLEAN_BOUND)
 
-                    self.valsPQ_shares.append( (m_pVal,m_qVal) )
-                    self.msgPool["1"]["sc-and"].append( (m_pVal,m_qVal) )
-                    self.msgPool["2"]["sc-and"].append( (m_pVal,m_qVal) )
-                    self.msgPool["2"]["invConv"].append( cmpShare[0] ) 
+                    self.valsPQ_shares[whole_index] =  (m_pVal,m_qVal) 
+                    self.msgPool["1"]["sc-and"][whole_index]= (m_pVal,m_qVal) 
+                    self.msgPool["2"]["sc-and"][whole_index]= (m_pVal,m_qVal) 
+                    self.msgPool["2"]["invConv"][whole_index]=cmpShare[0] 
                 else:
-                    condShare = self.condShares[i][1]
-                    alpha = self.triples[i][0][1]
-                    beta = self.triples[i][1][1]
+                    condShare = self.condShares[whole_index][1]
+                    alpha = self.triples[whole_index][0][1]
+                    beta = self.triples[whole_index][1][1]
                     m_pVal = inRing( condShare + alpha, BOOLEAN_BOUND)
                     m_qVal = inRing( xor + beta, BOOLEAN_BOUND)
-                    self.valsPQ_shares.append( (m_pVal,m_qVal) )
-                    self.msgPool["0"]["sc-and"].append( (m_pVal,m_qVal) )
-                    self.msgPool["2"]["sc-and"].append( (m_pVal,m_qVal) )
-                    self.msgPool["0"]["invConv"].append( cmpShare[0] ) 
 
-                self.cmpResultShares.append(cmpShare)
+                    self.valsPQ_shares[whole_index] =  (m_pVal,m_qVal) 
+                    self.msgPool["0"]["sc-and"][whole_index]= (m_pVal,m_qVal) 
+                    self.msgPool["2"]["sc-and"][whole_index]= (m_pVal,m_qVal) 
+                    self.msgPool["0"]["invConv"][whole_index]=cmpShare[0] 
+                self.cmpResultShares[whole_index]=cmpShare
         else:
             for i in range(self.nodesAmount):
                 cmpShare = [self.getZeroShares("bRand",BOOLEAN_BOUND),0]
-                self.msgPool["1"]["invConv"].append( cmpShare[0] )
-                self.cmpResultShares.append(cmpShare)
-        
+                self.msgPool["1"]["invConv"][i]= cmpShare[0]
+                self.cmpResultShares[i]=cmpShare
+    
     def compare2(self,pq_vals0,pq_vals1,otherBShareList):
         vec=[[],[]]
         for i in range(self.nodesAmount):
