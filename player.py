@@ -78,6 +78,20 @@ class Player:
                     willSend=True
             if willSend:
                 self.network.asend("server"+key,val)
+    
+    async def distributeNetworkPoolConservely(self):
+        for key,val in self.msgPool.items():
+            _type = type(val).__name__
+            willSend=False
+            if _type == "dict":
+                for inKey,inVal in val.items():
+                    if len(inVal)>0:
+                        willSend=True
+            elif _type == "list":
+                if len(val)>0:
+                    willSend=True
+            if willSend:
+                await self.network.send("server"+key,val)
                 
     
     async def distributeScatteredNetworkPool(self):

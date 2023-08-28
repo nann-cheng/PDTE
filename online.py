@@ -315,7 +315,7 @@ async def async_main(_id):
     elif _id == 0:
         player.resetMsgPoolWithKeys("shuffleReveal","optShuffle")
         player.pathEval1_optShuffleRespond(None,None,piShares)
-    await player.distributeNetworkPool()
+    await player.distributeNetworkPoolConservely()
     print("5th Round-Evaluation: bouncing back message")
 
 
