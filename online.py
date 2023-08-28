@@ -365,14 +365,14 @@ async def async_main(_id):
         if _id==0:
             v11 = await pool.recv("server1")
             print("The final selected class is: ", inRing(v00+ v01+v11,VEC_VAL_MAX_BOUND) )
-    if _id==0:
-        await asyncio.sleep(2)
-        await pool.shutdown()
-    if _id==1:
-        await asyncio.sleep(1)
-        await pool.shutdown()
-    else:
-        await pool.shutdown()
+    # if _id==0:
+    #     await asyncio.sleep(2)
+    #     await pool.shutdown()
+    # if _id==1:
+    #     await asyncio.sleep(1)
+    #     await pool.shutdown()
+    # else:
+    await pool.shutdown()
 
 
 if __name__ == "__main__":
