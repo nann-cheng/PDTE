@@ -13,5 +13,5 @@ BENCHMARK_OVER_CLOUD=True
 # BENCHMARK_OVER_SIMULATED=True
 
 ######Performance improvement options##########
-PERFORMANCE_BATCH_SIZE = 700
+PERFORMANCE_BATCH_SIZE = 400
 ######Performance improvement options##########
