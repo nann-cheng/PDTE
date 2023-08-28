@@ -6,6 +6,6 @@ pip install -U scikit-learn
 
 python3 -m pip install tno.mpc.communication
 
-cd data/train
+cd ../data/train
 
 python3 train.py
