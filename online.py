@@ -132,6 +132,7 @@ async def async_main(_id):
 
     if BENCHMARK_MEASURE_ONLINE_COMPUTATION:
         start_time = time.time()
+        initial_start_time = start_time
 
     ### <<<<< 1. Feature selection ### (1). Does feature selection on every non-leaf node value
     player.featureSelect0()# Collect First round message
@@ -358,6 +359,7 @@ async def async_main(_id):
         print(end_time-start_time)
         print("\n")
         start_time = end_time
+        print("The whole online time cost is: ",end_time-initial_start_time)
 
     ### Needs to say, by this point the protocol is completed.
     ### But to reconstruct the final value we ask p1 send his v1 to p0 for a construction of final classification result.
@@ -365,13 +367,6 @@ async def async_main(_id):
         if _id==0:
             v11 = await pool.recv("server1")
             print("The final selected class is: ", inRing(v00+ v01+v11,VEC_VAL_MAX_BOUND) )
-    # if _id==0:
-    #     await asyncio.sleep(2)
-    #     await pool.shutdown()
-    # if _id==1:
-    #     await asyncio.sleep(1)
-    #     await pool.shutdown()
-    # else:
     await pool.shutdown()
 
 
