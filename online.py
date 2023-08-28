@@ -295,7 +295,7 @@ async def async_main(_id):
     player.resetMsgPoolWithKeys("shuffleReveal","optShuffle")#Reset message pool
     player.pathEval0_shuffleReveal(bShares,piShares)
     player.pathEval0_optShuffle(piShares)
-    await player.distributeNetworkPool()#Send out messages
+    await player.distributeNetworkPoolConservely()#Send out messages
     print("4th Round-Evaluation: sending message.")
 
     if _id == 1:
