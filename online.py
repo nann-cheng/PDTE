@@ -270,7 +270,7 @@ async def async_main(_id):
         pq_vals1 = messages1["sc-and"]
         otherBShareList = messages0["invConv"]
         player.compare2(pq_vals0,pq_vals1,otherBShareList)
-    ### 2. Comparison phase >>>>> ###
+    ### 2. End Comparison phase >>>>> ###
 
 
 
