@@ -48,10 +48,7 @@ class BinaryTree:
     def __init__(self, name):
         clf=None
         self.modelName = name
-        # with open("data/train/"+name+".model", 'rb') as fid:
-        filePath = "/root/PDTE/" if BENCHMARK_OVER_CLOUD else "/home/crypto/Desktop/PDTE/"
-        # filePath = "/root/PDTE/"
-        with open(filePath+"data/train/"+name+".model", 'rb') as fid:
+        with open("./data/train/"+name+".model", 'rb') as fid:
             clf=  pickle.load(fid)
 
         self.thresholds = clf.tree_.threshold

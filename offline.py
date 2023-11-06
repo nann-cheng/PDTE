@@ -244,9 +244,6 @@ class Player:
 
         self.msgPool[ str( (self.ID+1)%3 )].append( mVec )
 
-        
-    
-
 async def async_main(_id):
     # Create the network pool for the current server
     pool = Pool()

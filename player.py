@@ -297,9 +297,9 @@ class Player:
                     m_pVal = inRing( condShare + alpha, BOOLEAN_BOUND)
                     m_qVal = inRing( xor + beta, BOOLEAN_BOUND)
 
-                    self.valsPQ_shares[whole_index] =  (m_pVal,m_qVal) 
-                    self.msgPool["0"]["sc-and"][whole_index]= (m_pVal,m_qVal) 
-                    self.msgPool["2"]["sc-and"][whole_index]= (m_pVal,m_qVal) 
+                    self.valsPQ_shares[whole_index] =  (m_pVal,m_qVal)
+                    self.msgPool["0"]["sc-and"][whole_index]= (m_pVal,m_qVal)
+                    self.msgPool["2"]["sc-and"][whole_index]= (m_pVal,m_qVal)
                     self.msgPool["0"]["invConv"][whole_index]=cmpShare[0] 
                 self.cmpResultShares[whole_index]=cmpShare
         else:
