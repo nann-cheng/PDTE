@@ -39,10 +39,6 @@ async def async_main(_id):
 
     # if _id == 0:
     # allFssKeys = dealer.distributeCmpKeys()
-        
-
-    
-
     player = Player(_id,aux,pool)
     player.inputRSS(leafShares,sharesSampleVec,treeShares,condShare)
     player.inputBeaverTriples(allTriples[_id])
@@ -105,6 +101,9 @@ async def async_main(_id):
             print(0)
         else:
             await pool.send("server1", pickle.dumps( allFssKeys[1])  )
+
+        await pool.send("server2", "Start online!" )
+        await pool.send("server1", "Start online!" )
     elif _id ==1:
         if BENCHMARK_MEASURE_OFFLINE_COMMU:
             message = await pool.recv("server0")
@@ -117,9 +116,12 @@ async def async_main(_id):
             mFssKeysBytes = await pool.recv("server0")
             mFssKeys = pickle.loads(mFssKeysBytes)
             player.inputFSSKeys(mFssKeys)
+        
+        start = await pool.recv("server0")
     else:
         if BENCHMARK_MEASURE_OFFLINE_COMMU:
             print(0)
+        start = await pool.recv("server0")
 
 
     if BENCHMARK_MEASURE_ONLINE_COMMU:
@@ -203,7 +205,6 @@ async def async_main(_id):
     player.resetMsgPoolAsList()#Clear message pool
     print("1st Round-feature selection completed")
     ### 1. Feature selection >>>>> ###
-
     if BENCHMARK_MEASURE_ONLINE_COMMU:
         nowRecv = pool.getRecvBytes()
         # print("Player ",_id, " feature selection received: ",nowRecv-lastRecv)
@@ -266,7 +267,6 @@ async def async_main(_id):
         otherBShareList = messages0["invConv"]
         player.compare2(pq_vals0,pq_vals1,otherBShareList)
     ### 2. End Comparison phase >>>>> ###
-
 
 
 
