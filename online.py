@@ -17,14 +17,9 @@ async def async_main(_id):
     # Create the network pool for the current server
     pool = Pool()
 
-    if BENCHMARK_OVER_CLOUD:
-        pool.add_http_server( addr=SERVER_IPS_CLOUD[_id], port=NEWTWORK_PORTS[_id] )
-        pool.add_http_client("server"+ str( (_id+1)%3 ), addr=SERVER_IPS_CLOUD[(_id+1)%3], port=NEWTWORK_PORTS[(_id+1)%3])
-        pool.add_http_client("server"+ str( (_id+2)%3 ), addr=SERVER_IPS_CLOUD[(_id+2)%3], port=NEWTWORK_PORTS[(_id+2)%3])
-    else:
-        pool.add_http_server( addr=SERVER_IPS[_id], port=NEWTWORK_PORTS[_id] )
-        pool.add_http_client("server"+ str( (_id+1)%3 ), addr=SERVER_IPS[(_id+1)%3], port=NEWTWORK_PORTS[(_id+1)%3])
-        pool.add_http_client("server"+ str( (_id+2)%3 ), addr=SERVER_IPS[(_id+2)%3], port=NEWTWORK_PORTS[(_id+2)%3])
+    pool.add_http_server( addr=SERVER_IPS[_id], port=NEWTWORK_PORTS[_id] )
+    pool.add_http_client("server"+ str( (_id+1)%3 ), addr=SERVER_IPS[(_id+1)%3], port=NEWTWORK_PORTS[(_id+1)%3])
+    pool.add_http_client("server"+ str( (_id+2)%3 ), addr=SERVER_IPS[(_id+2)%3], port=NEWTWORK_PORTS[(_id+2)%3])
 
     ### <<<<< 0. Setup phase ###
     dealer = Dealer()
