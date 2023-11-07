@@ -28,11 +28,11 @@ This is an implementation of the protocols in paper [Constant-Round Private Deci
 
 ## Configuration for benchmarking
 
-+ Configure IP addresses in `common/constants.py` file, where change
++ Configure IP addresses in `common/constants.py` file. Change
 `SERVER_IPS = ["127.0.0.1", "127.0.0.1", "127.0.0.1"]` 
-to enable a LAN setting or real IP addresses for a real WAN setting.
+to enable a LAN setting, or change them to your own  cloud-server IP addresses for a real WAN setting.
 
-+ In `benchmarkOption.py` file to change the test index id, which indicates the index whithin dataset `["wine", "linnerud", "cancer", "digits-10", "digits-12", "digits-15","diabets-18","diabets-20"]`, as well as other benchmarking options defined in the same file.
++ In `benchmarkOption.py` file, change the test index id `BENCHMARK_CHOICE_DATASET_IDX`,  which indicates the index whithin dataset `["wine", "linnerud", "cancer", "digits-10", "digits-12", "digits-15","diabets-18","diabets-20"]`, as well as other benchmarking options defined you need.
 
 
 ## How to run the benchmarking
