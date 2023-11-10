@@ -1,24 +1,20 @@
 ## PDTE
 
-This is an implementation of the protocols in paper [Constant-Round Private Decision Tree Evaluation for Secret Shared Data](https://eprint.iacr.org/2023/1307),  will soon appear at PETS 2024.
+This is an implementation of the protocols in paper [Constant-Round Private Decision Tree Evaluation for Secret Shared Data](https://eprint.iacr.org/2023/1307),  will appear at PETS 2024.
 
 ## Pre-requirments 
 
-`pip install numpy`
-
-`pip install sycret`
+`pip install numpy sycret`
 
 `pip install -U scikit-learn`
 
 `python3 -m pip install tno.mpc.communication`
-
 
 ## prepare pre-trained model
 
 `cd ../data/train`
 
 `python3 train.py`
-
 
 <!--## Structure of the code files
 
