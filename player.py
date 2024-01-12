@@ -124,7 +124,7 @@ class Player:
                         chunks_size += 1
         
         #However, we need to sync each small chunk
-        print("chunk size is: ",chunks_size)
+        # print("chunk size is: ",chunks_size)
         for i in range(chunks_size):
             for key in willSendKeys:
                 cur_data = self.msgPool.get(key)

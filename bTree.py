@@ -48,7 +48,7 @@ class BinaryTree:
     def __init__(self, name):
         clf=None
         self.modelName = name
-        with open("./data/train/"+name+".model", 'rb') as fid:
+        with open("./model/"+name+".model", 'rb') as fid:
             clf=  pickle.load(fid)
 
         self.thresholds = clf.tree_.threshold
@@ -58,7 +58,7 @@ class BinaryTree:
         
         # print("binary tree features are: ", self.features)
         # self.featureUsed = clf.n_features_in_int
-        print("nodes num is: ",len(self.thresholds))
+        # print("nodes num is: ",len(self.thresholds))
         # print(self.values)
         
         # count used feature number here
@@ -143,10 +143,8 @@ class BinaryTree:
             parent.setAsLeaf()
     
     def getNodesInfo(self,CONVERT_FACTOR):
-        print(self.modelName," is with ",self.dummyNodesCnt," dummy nodes.")
-        print(self.modelName, " is with ", self.maxHeight, " depth.")
-
-
+        # print(self.modelName," is with ",self.dummyNodesCnt," dummy nodes.")
+        # print(self.modelName, " is with ", self.maxHeight, " depth.")
         queue = [self.root]
         nonLeafNodes=[]
         leafNodes=[]
