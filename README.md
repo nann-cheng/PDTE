@@ -1,6 +1,6 @@
 ## PDTE
 
-This is an implementation of the protocols in paper [Constant-Round Private Decision Tree Evaluation for Secret Shared Data](https://eprint.iacr.org/2023/1307),  will appear at PETS 2024. This protocol involves three servers running the private decision tree algorithm over the **decision tree model** and a **sample vector**.
+This is an implementation of the protocols in paper [Constant-Round Private Decision Tree Evaluation for Secret Shared Data](https://eprint.iacr.org/2023/1307),  will appear at PETS 2024. This protocol involves three servers running the private decision tree algorithm provided by the **decision tree model** and a **sample vector**.
 
 
 ## Structure of the code files
@@ -57,10 +57,12 @@ After running
 
 it's expected to have all the performance report regarding
 
- - Offline-phase communication cost: this can be found in the terminal output of `python3 server.py 1`', where we can find somewhere in the output with
+ - Offline-phase communication cost: this can be found in the terminal output of `python3 server.py 1`, where we can find somewhere in the output with
     - `*********Offline FeatSelect preparation communication cost's: xx bytes!*********`.
     - `*********Offline PathEval preparation communication cost's: xx bytes!*********`.
     - `*********Offline Compare preparation communication cost's: xx bytes!*********`.
+
+    this directly gives us the offline-phase communication cost.
 
  - Online-phase communication/computation cost: these numbers appear at every terminal output of `python3 server.py 0/1/2`', where we can find somewhere in the output with
     - `******************Online FeatSelect communication cost's: xx bytes!*********`.
@@ -71,7 +73,8 @@ it's expected to have all the performance report regarding
 
     - `*********Online PathEval communication cost's: xx bytes!*********`.
     - `*********Online PathEval computation time's: xx s!*********`.
-    
-    - `*********Total online computation time's: xx s!*********`.
 
-when we use set `BENCHMARK_CHOICE_DATASET_IDX` from 0 to 6, and organize all these numbers altogether, it's able to test the overall performance of the realized protocols in either offline phase or online phase.
+    - `*********Total online computation time's: xx s!*********`.
+    However, it's required to sum up all partial cost together to get the average cost regarding of computation time or communication volume cost with measurement above.
+
+In conclusion, when we set the value of `BENCHMARK_CHOICE_DATASET_IDX` from 0 to 6, and organize all these numbers altogether, it's able to test the overall performance of the realized protocols in either offline phase or online phase.
