@@ -75,6 +75,7 @@ it's expected to have all the performance report regarding
     - `*********Online PathEval computation time's: xx s!*********`.
 
     - `*********Total online computation time's: xx s!*********`.
+    
     However, it's required to sum up all partial cost together to get the average cost regarding of computation time or communication volume cost with measurement above.
 
-In conclusion, when we set the value of `BENCHMARK_CHOICE_DATASET_IDX` from 0 to 6, and organize all these numbers altogether, it's able to test the overall performance of the realized protocols in either offline phase or online phase.
+Additionally we can change the value of `BENCHMARK_CHOICE_DATASET_IDX` from 0 to 6, such that we could test over the corresponding indexed item in dataset `["wine", "linnerud", "cancer", "digits-10", "digits-12", "digits-15","diabets-18",]`.
